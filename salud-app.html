@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mi Salud">
+<title>Mi Salud</title>
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --white: #FFFFFF;
+    --green: #7A9E87;
+    --green-light: #F2F6F3;
+    --green-mid: #C8DAD0;
+    --green-dark: #4B6E56;
+    --text: #1C1C1E;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --border: #E5E7EB;
+    --border-green: #C8DAD0;
+    --reveal: #E8F0FE;
+    --reveal-text: #3B5BDB;
+    --reframe: #FEF3E8;
+    --reframe-text: #C17B5C;
+    --reinforce: #F2F6F3;
+    --reinforce-text: #4B6E56;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-full: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: #E5E7EB;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* SCREENS */
+  .screen { display: none; flex-direction: column; flex: 1; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* SAFE AREAS */
+  .safe-top { padding-top: max(44px, env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+
+  /* ONBOARDING */
+  .onboard-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 28px 32px;
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 36px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .back-btn {
+    background: none; border: none;
+    color: var(--green); font-size: 15px;
+    cursor: pointer; font-family: inherit;
+    padding: 0; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 6px;
+    -webkit-appearance: none;
+  }
+  .back-arrow { font-size: 18px; line-height: 1; }
+
+  .q-label {
+    font-size: 24px; font-weight: 500;
+    color: var(--text); line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .q-sub {
+    font-size: 15px; color: var(--text-secondary);
+    margin-bottom: 32px; line-height: 1.5;
+  }
+
+  /* INPUTS */
+  input[type=text].field,
+  input[type=number].field,
+  textarea.field {
+    display: block; width: 100%;
+    padding: 15px 18px;
+    font-size: 17px; color: var(--text);
+    background: var(--white) !important;
+    border: 1px solid var(--border-green) !important;
+    border-radius: var(--radius);
+    outline: none; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+    box-shadow: none !important;
+    margin-bottom: 14px;
+  }
+  input[type=text].field::placeholder,
+  input[type=number].field::placeholder,
+  textarea.field::placeholder { color: #B0C4BA; }
+  input[type=text].field:focus,
+  input[type=number].field:focus,
+  textarea.field:focus { border-color: var(--green) !important; }
+  textarea.field { resize: none; line-height: 1.5; }
+
+  .field-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 2px; }
+
+  /* UNIT TOGGLE */
+  .unit-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .unit-btn {
+    flex: 1; padding: 10px;
+    border: 1px solid var(--border-green);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    font-size: 14px; color: var(--text-secondary);
+    cursor: pointer; font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .unit-btn.active {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green-dark); font-weight: 500;
+  }
+
+  /* OPTION CARDS */
+  .option-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-appearance: none;
+  }
+  .option-card.selected {
+    border: 1.5px solid var(--green);
+    background: var(--green-light);
+  }
+  .option-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 20px;
+    transition: background 0.15s;
+  }
+  .option-card.selected .option-icon { background: var(--green); }
+  .option-card.selected .option-icon .ico { filter: brightness(10); }
+  .option-title { font-size: 16px; color: var(--text); line-height: 1.3; }
+  .option-desc { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* TAGS */
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .tag {
+    padding: 9px 16px;
+    border: 1px solid var(--border-green);
+    border-radius: var(--radius-full);
+    font-size: 14px; color: var(--green-dark);
+    background: var(--white); cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .tag.selected {
+    border-color: var(--green);
+    background: var(--green-light);
+    font-weight: 500;
+  }
+
+  /* BUTTONS */
+  .btn-primary {
+    width: 100%; padding: 17px;
+    background: var(--green); border: none;
+    border-radius: var(--radius);
+    color: var(--white); font-size: 17px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    margin-top: 16px; -webkit-appearance: none;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary {
+    width: 100%; padding: 15px;
+    background: var(--white);
+    border: 1px solid var(--border-green);
+    border-radius: var(--radius);
+    color: var(--green-dark); font-size: 15px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    -webkit-appearance: none; transition: opacity 0.15s;
+  }
+  .btn-secondary:active { opacity: 0.8; }
+
+  .spacer { flex: 1; }
+
+  /* WELCOME SCREEN */
+  .welcome-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px 32px 48px;
+  }
+  .app-icon {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: var(--green-light); border: 1px solid var(--border-green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin: 0 auto 28px;
+  }
+  .welcome-title { font-size: 28px; font-weight: 500; color: var(--text); margin-bottom: 12px; line-height: 1.25; }
+  .welcome-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 48px; }
+  .privacy-note { font-size: 12px; color: var(--text-muted); margin-top: 14px; }
+
+  /* HOME SCREEN */
+  .home-header {
+    padding: 16px 24px 8px;
+    flex-shrink: 0;
+  }
+  .greeting { font-size: 13px; color: var(--text-secondary); margin-bottom: 2px; }
+  .user-name { font-size: 24px; font-weight: 500; color: var(--text); }
+
+  .scroll-body { flex: 1; overflow-y: auto; padding: 0 24px 16px; -webkit-overflow-scrolling: touch; }
+
+  .section-label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin: 16px 0 10px;
+  }
+
+  /* BANNER */
+  .banner {
+    margin: 4px 24px 8px;
+    background: var(--green-light);
+    border: 0.5px solid var(--green);
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .banner-text { font-size: 13px; color: var(--green-dark); line-height: 1.4; flex: 1; }
+  .banner-arrow { font-size: 16px; color: var(--green); flex-shrink: 0; }
+  .banner.hidden { display: none; }
+
+  /* INSIGHT CARD */
+  .insight-card {
+    background: var(--white);
+    border: 0.5px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    margin-bottom: 12px;
+  }
+  .insight-domain {
+    font-size: 11px; font-weight: 600; color: var(--green);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .insight-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+  .insight-body { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .insight-type-badge {
+    display: inline-block; margin-top: 12px;
+    font-size: 11px; padding: 4px 12px;
+    border-radius: var(--radius-full);
+  }
+  .type-Revelar { background: var(--reveal); color: var(--reveal-text); }
+  .type-Reencuadrar { background: var(--reframe); color: var(--reframe-text); }
+  .type-Reforzar { background: var(--reinforce); color: var(--reinforce-text); }
+
+  /* LOADING */
+  .loading-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; padding: 32px 0; gap: 12px;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    animation: dotpulse 1.2s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotpulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+  .loading-text { font-size: 13px; color: var(--text-muted); }
+
+  /* WEEKLY QUESTION */
+  .question-card {
+    background: var(--white);
+    border: 1px solid var(--border-green);
+    border-radius: 16px; padding: 18px;
+    margin-bottom: 12px;
+  }
+  .q-domain {
+    font-size: 11px; font-weight: 600; color: var(--green);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .q-text { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 14px; line-height: 1.4; }
+
+  /* PROGRESS NOTE */
+  .progress-card {
+    background: var(--green-light);
+    border: 1px solid var(--green-mid);
+    border-radius: 16px; padding: 18px;
+    margin-bottom: 12px;
+  }
+  .progress-title { font-size: 15px; font-weight: 500; color: var(--green-dark); margin-bottom: 6px; }
+  .progress-body { font-size: 13px; color: var(--green-dark); line-height: 1.6; opacity: 0.85; }
+
+  /* LIMIT MESSAGE */
+  .limit-msg {
+    background: var(--reframe);
+    border: 1px solid #F0C9A8;
+    border-radius: 16px; padding: 18px;
+    margin-bottom: 12px;
+  }
+  .limit-msg-text { font-size: 14px; color: var(--reframe-text); line-height: 1.6; }
+
+  /* NAV */
+  .nav-bar {
+    display: flex;
+    border-top: 0.5px solid var(--border);
+    background: var(--bg);
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    font-size: 10px; color: var(--text-muted);
+    cursor: pointer; padding: 2px 0;
+    transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--green); }
+  .nav-ico { font-size: 22px; line-height: 1; }
+
+  /* PROFILE SCREEN */
+  .profile-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--white);
+    border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 12px 16px;
+    margin-bottom: 8px; font-size: 14px; color: var(--text);
+    line-height: 1.4;
+  }
+  .profile-ico { font-size: 16px; color: var(--green); flex-shrink: 0; margin-top: 1px; }
+
+  /* HISTORY SCREEN */
+  .history-card {
+    background: var(--white);
+    border: 0.5px solid var(--border);
+    border-radius: 14px; padding: 16px;
+    margin-bottom: 10px;
+  }
+  .history-week { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .history-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+  .history-domain { font-size: 11px; color: var(--green); }
+
+  /* DEEP PROFILE SCREEN */
+  .deep-section { margin-bottom: 28px; }
+  .deep-section-title { font-size: 18px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .deep-section-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+
+  /* UTILITY */
+  .text-center { text-align: center; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mb-0 { margin-bottom: 0; }
+  .empty-state {
+    text-align: center; padding: 40px 24px;
+    color: var(--text-muted); font-size: 14px; line-height: 1.6;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SCREEN: API KEY ENTRY -->
+  <div class="screen active" id="s-key">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="welcome-wrap" style="justify-content:flex-start;padding-top:60px;">
+      <div class="app-icon">🔑</div>
+      <h1 class="welcome-title" style="font-size:24px;">Clave de acceso</h1>
+      <p class="welcome-sub" style="font-size:15px;margin-bottom:32px;">Para personalizar tus recomendaciones necesitamos una clave de acceso. Tu familiar te la habrá enviado por WhatsApp. Se guarda solo en tu dispositivo y nadie más puede verla.</p>
+      <div style="width:100%;text-align:left;margin-bottom:6px;">
+        <p class="field-label">Pega tu clave aquí</p>
+      </div>
+      <input class="field" type="password" id="f-apikey" placeholder="sk-ant-..." style="font-size:14px;letter-spacing:0.5px;" />
+      <div id="key-error" style="color:#C17B5C;font-size:13px;margin-top:-8px;margin-bottom:12px;display:none;">
+        La clave no parece válida. Verifica que la copiaste completa.
+      </div>
+      <button class="btn-primary" style="margin-top:8px;" onclick="saveApiKey()">Continuar</button>
+      <p class="privacy-note" style="margin-top:16px;">Tu clave nunca sale de tu teléfono</p>
+    </div>
+  </div>
+
+  <!-- SCREEN: WELCOME -->
+  <div class="screen" id="s-welcome">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="welcome-wrap">
+      <div class="app-icon">🌿</div>
+      <h1 class="welcome-title">Tu bienestar,<br>a tu ritmo</h1>
+      <p class="welcome-sub">Responde unas preguntas y recibirás ideas personalizadas cada semana — basadas en quién eres, no en consejos genéricos.</p>
+      <button class="btn-primary" style="width:260px;" onclick="goTo('s-name')">Comenzar</button>
+      <p class="privacy-note">Tu información es privada y solo tuya</p>
+    </div>
+  </div>
+
+  <!-- SCREEN: NAME + AGE -->
+  <div class="screen" id="s-name">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="onboard-wrap">
+      <button class="back-btn" onclick="goTo('s-welcome')"><span class="back-arrow">‹</span> Atrás</button>
+      <div class="progress-track"><div class="progress-fill" style="width:16%"></div></div>
+      <h2 class="q-label">¿Cómo te llamas?</h2>
+      <p class="q-sub">Así sabremos cómo dirigirnos a ti</p>
+      <input class="field" type="text" id="f-nombre" placeholder="Tu nombre" autocomplete="given-name" />
+      <h2 class="q-label mt-8">¿Cuántos años tienes?</h2>
+      <p class="q-sub">Tu edad nos ayuda a personalizar las recomendaciones</p>
+      <input class="field" type="number" id="f-edad" placeholder="65" min="18" max="99" />
+      <p class="q-label mt-8">¿Cuál es tu sexo biológico?</p>
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        <button class="tag" id="sex-m" onclick="setSex('Masculino')">Masculino</button>
+        <button class="tag" id="sex-f" onclick="setSex('Femenino')">Femenino</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="nextFromName()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: WEIGHT + HEIGHT -->
+  <div class="screen" id="s-body">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="onboard-wrap">
+      <button class="back-btn" onclick="goTo('s-name')"><span class="back-arrow">‹</span> Atrás</button>
+      <div class="progress-track"><div class="progress-fill" style="width:32%"></div></div>
+      <h2 class="q-label">¿Cuánto pesas?</h2>
+      <p class="q-sub">Un estimado aproximado está bien</p>
+      <div class="unit-row">
+        <button class="unit-btn active" id="u-kg" onclick="setWeightUnit('kg')">kg</button>
+        <button class="unit-btn" id="u-lb" onclick="setWeightUnit('lb')">lb</button>
+      </div>
+      <input class="field" type="number" id="f-peso" placeholder="70" />
+      <h2 class="q-label mt-8">¿Cuánto mides?</h2>
+      <p class="q-sub">Tu altura nos ayuda a calcular tu índice de masa</p>
+      <div class="unit-row">
+        <button class="unit-btn active" id="u-cm" onclick="setHeightUnit('cm')">cm</button>
+        <button class="unit-btn" id="u-ft" onclick="setHeightUnit('ft')">ft</button>
+      </div>
+      <input class="field" type="number" id="f-altura" placeholder="170" />
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="nextFromBody()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: HEALTH + MEDS -->
+  <div class="screen" id="s-health">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="onboard-wrap">
+      <button class="back-btn" onclick="goTo('s-body')"><span class="back-arrow">‹</span> Atrás</button>
+      <div class="progress-track"><div class="progress-fill" style="width:50%"></div></div>
+      <h2 class="q-label">¿Tienes alguna de estas condiciones?</h2>
+      <p class="q-sub">Selecciona todo lo que aplique</p>
+      <div class="tag-row" id="conditions-row">
+        <button class="tag" onclick="toggleTag(this,'cond')">Diabetes o pre-diabetes</button>
+        <button class="tag" onclick="toggleTag(this,'cond')">Presión alta</button>
+        <button class="tag" onclick="toggleTag(this,'cond')">Problemas digestivos</button>
+        <button class="tag" onclick="toggleTag(this,'cond')">Colesterol elevado</button>
+        <button class="tag" onclick="toggleTag(this,'cond')">Problemas de tiroides</button>
+        <button class="tag" onclick="toggleTag(this,'cond')">Ninguna</button>
+      </div>
+      <h2 class="q-label">¿Tomas algún medicamento?</h2>
+      <p class="q-sub">Incluye suplementos si los tomas a diario</p>
+      <input class="field" type="text" id="f-meds" placeholder="Ej: Ozempic, metformina, omeprazol..." />
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="nextFromHealth()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: SLEEP -->
+  <div class="screen" id="s-sleep">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="onboard-wrap">
+      <button class="back-btn" onclick="goTo('s-health')"><span class="back-arrow">‹</span> Atrás</button>
+      <div class="progress-track"><div class="progress-fill" style="width:66%"></div></div>
+      <h2 class="q-label">¿Cómo describes tu sueño?</h2>
+      <p class="q-sub">Puedes elegir más de una opción</p>
+      <div id="sleep-opts">
+        <div class="option-card" onclick="toggleSleep(this,'me cuesta dormirme')">
+          <div class="option-icon">🌙</div>
+          <div>
+            <p class="option-title">Me cuesta dormirme</p>
+            <p class="option-desc">Tardo en conciliar el sueño</p>
+          </div>
+        </div>
+        <div class="option-card" onclick="toggleSleep(this,'me desvelo durante la noche')">
+          <div class="option-icon">🔄</div>
+          <div>
+            <p class="option-title">Me desvelo durante la noche</p>
+            <p class="option-desc">Me despierto varias veces</p>
+          </div>
+        </div>
+        <div class="option-card" onclick="toggleSleep(this,'me levanto muy temprano')">
+          <div class="option-icon">🌅</div>
+          <div>
+            <p class="option-title">Me levanto muy temprano</p>
+            <p class="option-desc">Y no puedo volver a dormir</p>
+          </div>
+        </div>
+        <div class="option-card" onclick="toggleSleep(this,'duermo bien')">
+          <div class="option-icon">✅</div>
+          <div>
+            <p class="option-title">Duermo bien</p>
+            <p class="option-desc">Me despierto descansado</p>
+          </div>
+        </div>
+      </div>
+      <p class="field-label mt-8">¿Algo más sobre tu sueño? <span style="color:var(--text-muted)">(opcional)</span></p>
+      <input class="field" type="text" id="f-sleep-note" placeholder="Ej: me levanto a las 4am..." />
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="nextFromSleep()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: READINESS -->
+  <div class="screen" id="s-ready">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="onboard-wrap">
+      <button class="back-btn" onclick="goTo('s-sleep')"><span class="back-arrow">‹</span> Atrás</button>
+      <div class="progress-track"><div class="progress-fill" style="width:83%"></div></div>
+      <h2 class="q-label">¿Cómo te sientes con respecto a cambiar tus hábitos?</h2>
+      <p class="q-sub">Sé honesto — no hay respuesta incorrecta</p>
+      <div id="ready-opts">
+        <div class="option-card" onclick="selectReady(this,'Listo para cambiar. Quiere entender el por qué y actuar.')">
+          <div class="option-icon">🔥</div>
+          <div>
+            <p class="option-title">Listo para cambiar</p>
+            <p class="option-desc">Quiero entender el por qué y actuar</p>
+          </div>
+        </div>
+        <div class="option-card" onclick="selectReady(this,'Quiere mejorar pero despacio. Prefiere cambios pequeños y sostenibles.')">
+          <div class="option-icon">🌱</div>
+          <div>
+            <p class="option-title">Quiero mejorar, pero despacio</p>
+            <p class="option-desc">Cambios pequeños y sostenibles</p>
+          </div>
+        </div>
+        <div class="option-card" onclick="selectReady(this,'Solo quiere entender su cuerpo. Sin presión por ahora.')">
+          <div class="option-icon">👁</div>
+          <div>
+            <p class="option-title">Solo quiero entender mi cuerpo</p>
+            <p class="option-desc">Sin presión por ahora</p>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn-primary" onclick="finishOnboarding()">Ver mi plan</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: HOME -->
+  <div class="screen" id="s-home">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="home-header">
+      <p class="greeting" id="home-greeting">Buenos días,</p>
+      <p class="user-name" id="home-name">—</p>
+    </div>
+    <div class="banner" id="profile-banner" onclick="goDeepProfile()">
+      <span style="font-size:16px;">✨</span>
+      <p class="banner-text">Agrega más información para mejorar tus recomendaciones</p>
+      <span class="banner-arrow">›</span>
+    </div>
+    <div class="scroll-body">
+      <p class="section-label">Tu insight de esta semana</p>
+      <div id="insight-zone">
+        <div class="loading-wrap">
+          <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <p class="loading-text">Preparando tu primer insight...</p>
+        </div>
+      </div>
+      <div id="extra-btn-zone"></div>
+      <div id="question-zone" style="display:none;">
+        <p class="section-label">Esta semana te preguntamos</p>
+        <div class="question-card">
+          <p class="q-domain">Conocerte mejor</p>
+          <p class="q-text" id="weekly-q-text">—</p>
+          <textarea class="field mb-0" id="weekly-answer" rows="3" placeholder="Tu respuesta..."></textarea>
+          <button class="btn-primary" style="margin-top:10px;" onclick="saveWeeklyAnswer()">Guardar</button>
+        </div>
+      </div>
+      <div id="progress-note-zone"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item active" onclick="switchTab('home')" id="nav-home">
+        <span class="nav-ico">🏠</span><span>Inicio</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('profile')" id="nav-profile">
+        <span class="nav-ico">👤</span><span>Perfil</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('history')" id="nav-history">
+        <span class="nav-ico">📋</span><span>Historial</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: PROFILE TAB -->
+  <div class="screen" id="s-profile">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="home-header">
+      <p class="greeting">Tu perfil</p>
+      <p class="user-name" id="profile-name">—</p>
+    </div>
+    <div class="scroll-body">
+      <p class="section-label">Lo que sabemos de ti</p>
+      <div id="profile-items"></div>
+      <p class="section-label mt-16">Agregar contexto</p>
+      <button class="btn-secondary" onclick="goDeepProfile()">
+        <span>＋</span> Completar mi perfil
+      </button>
+      <div style="height:16px;"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item" onclick="switchTab('home')" id="nav-home-p">
+        <span class="nav-ico">🏠</span><span>Inicio</span>
+      </div>
+      <div class="nav-item active" onclick="switchTab('profile')" id="nav-profile-p">
+        <span class="nav-ico">👤</span><span>Perfil</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('history')" id="nav-history-p">
+        <span class="nav-ico">📋</span><span>Historial</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: HISTORY TAB -->
+  <div class="screen" id="s-history">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="home-header">
+      <p class="greeting">Historial</p>
+      <p class="user-name">Tus insights</p>
+    </div>
+    <div class="scroll-body">
+      <div id="history-list"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item" onclick="switchTab('home')" id="nav-home-h">
+        <span class="nav-ico">🏠</span><span>Inicio</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('profile')" id="nav-profile-h">
+        <span class="nav-ico">👤</span><span>Perfil</span>
+      </div>
+      <div class="nav-item active" onclick="switchTab('history')" id="nav-history-h">
+        <span class="nav-ico">📋</span><span>Historial</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: DEEP PROFILE -->
+  <div class="screen" id="s-deep">
+    <div class="safe-top" style="flex-shrink:0;"></div>
+    <div class="onboard-wrap" style="padding-top:16px;">
+      <button class="back-btn" onclick="switchTab('profile')"><span class="back-arrow">‹</span> Atrás</button>
+      <h2 class="q-label">Cuéntanos más</h2>
+      <p class="q-sub">Entre más contexto tenemos, mejores son tus insights</p>
+
+      <div class="deep-section">
+        <p class="deep-section-title">¿Qué comes típicamente?</p>
+        <p class="deep-section-sub">Describe tu alimentación del día a día</p>
+        <textarea class="field" id="d-dieta" rows="3" placeholder="Ej: ayuno hasta el mediodía, como proteína con verduras en la noche..."></textarea>
+      </div>
+
+      <div class="deep-section">
+        <p class="deep-section-title">¿Qué consumes en la mañana?</p>
+        <p class="deep-section-sub">Todo — incluyendo café, bebidas, cualquier cosa antes de tu primera comida</p>
+        <textarea class="field" id="d-manana" rows="3" placeholder="Ej: café con leche de avena, agua con limón..."></textarea>
+      </div>
+
+      <div class="deep-section">
+        <p class="deep-section-title">¿Qué tan seguido comes fuera?</p>
+        <p class="deep-section-sub">Restaurantes, domicilios, reuniones sociales</p>
+        <div class="tag-row" id="eat-out-row">
+          <button class="tag" onclick="toggleTag(this,'eatout')">Casi nunca</button>
+          <button class="tag" onclick="toggleTag(this,'eatout')">1-2 veces por semana</button>
+          <button class="tag" onclick="toggleTag(this,'eatout')">3-4 veces por semana</button>
+          <button class="tag" onclick="toggleTag(this,'eatout')">Casi todos los días</button>
+        </div>
+      </div>
+
+      <div class="deep-section">
+        <p class="deep-section-title">¿Consumes alcohol?</p>
+        <div class="tag-row" id="alcohol-row">
+          <button class="tag" onclick="toggleTag(this,'alcohol')">No consumo</button>
+          <button class="tag" onclick="toggleTag(this,'alcohol')">Ocasionalmente</button>
+          <button class="tag" onclick="toggleTag(this,'alcohol')">2-3 veces por semana</button>
+          <button class="tag" onclick="toggleTag(this,'alcohol')">Casi todos los días</button>
+        </div>
+      </div>
+
+      <div class="deep-section">
+        <p class="deep-section-title">¿Cuánta agua tomas al día?</p>
+        <div class="tag-row" id="water-row">
+          <button class="tag" onclick="toggleTag(this,'water')">Menos de 1 litro</button>
+          <button class="tag" onclick="toggleTag(this,'water')">1-2 litros</button>
+          <button class="tag" onclick="toggleTag(this,'water')">Más de 2 litros</button>
+        </div>
+      </div>
+
+      <div class="deep-section">
+        <p class="deep-section-title">¿Algo más que quieras que sepamos?</p>
+        <textarea class="field" id="d-extra" rows="3" placeholder="Ej: trabajo bajo mucho estrés, tengo problemas digestivos frecuentes..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="saveDeepProfile()">Guardar y mejorar mis insights</button>
+      <div style="height:32px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'salud_app_v1';
+let STATE = {
+  onboarded: false,
+  profile: {},
+  deepProfile: {},
+  weeklyAnswers: [],
+  insights: [],
+  insightsThisWeek: 0,
+  lastInsightWeek: null,
+  lastProgressNoteDate: null,
+  currentWeekQuestion: null,
+  weeklyAnswerSaved: false
+};
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { STATE = { ...STATE, ...JSON.parse(raw) }; } catch(e) {}
+  }
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function switchTab(tab) {
+  const map = { home: 's-home', profile: 's-profile', history: 's-history' };
+  goTo(map[tab]);
+  if (tab === 'home') renderHome();
+  if (tab === 'profile') renderProfile();
+  if (tab === 'history') renderHistory();
+}
+
+function goDeepProfile() { goTo('s-deep'); loadDeepProfile(); }
+
+// ─── ONBOARDING STATE ────────────────────────────────────────────────────────
+let selectedSex = '';
+let selectedSleep = [];
+let selectedReadiness = '';
+let weightUnit = 'kg';
+let heightUnit = 'cm';
+
+function setSex(val) {
+  selectedSex = val;
+  document.getElementById('sex-m').classList.toggle('selected', val === 'Masculino');
+  document.getElementById('sex-f').classList.toggle('selected', val === 'Femenino');
+}
+
+function setWeightUnit(u) {
+  weightUnit = u;
+  document.getElementById('u-kg').classList.toggle('active', u === 'kg');
+  document.getElementById('u-lb').classList.toggle('active', u === 'lb');
+  document.getElementById('f-peso').placeholder = u === 'kg' ? '70' : '154';
+}
+
+function setHeightUnit(u) {
+  heightUnit = u;
+  document.getElementById('u-cm').classList.toggle('active', u === 'cm');
+  document.getElementById('u-ft').classList.toggle('active', u === 'ft');
+  document.getElementById('f-altura').placeholder = u === 'cm' ? '170' : '5.7';
+}
+
+function toggleTag(el, group) {
+  if (group === 'cond' && el.textContent === 'Ninguna') {
+    document.querySelectorAll('#conditions-row .tag').forEach(t => t.classList.remove('selected'));
+  } else if (group === 'cond') {
+    document.querySelector('#conditions-row .tag:last-child')?.classList.remove('selected');
+  }
+  el.classList.toggle('selected');
+}
+
+function toggleSleep(card, val) {
+  card.classList.toggle('selected');
+  if (val === 'duermo bien') {
+    document.querySelectorAll('#sleep-opts .option-card').forEach(c => {
+      if (c !== card) c.classList.remove('selected');
+    });
+    selectedSleep = card.classList.contains('selected') ? ['duermo bien'] : [];
+  } else {
+    document.querySelectorAll('#sleep-opts .option-card').forEach(c => {
+      if (c.querySelector('.option-title').textContent === 'Duermo bien') c.classList.remove('selected');
+    });
+    if (card.classList.contains('selected')) {
+      if (!selectedSleep.includes(val)) selectedSleep.push(val);
+    } else {
+      selectedSleep = selectedSleep.filter(v => v !== val);
+    }
+    selectedSleep = selectedSleep.filter(v => v !== 'duermo bien');
+  }
+}
+
+function selectReady(card, val) {
+  selectedReadiness = val;
+  document.querySelectorAll('#ready-opts .option-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+// ─── ONBOARDING NEXT STEPS ───────────────────────────────────────────────────
+function nextFromName() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const edad = document.getElementById('f-edad').value.trim();
+  if (!nombre || !edad) { alert('Por favor completa tu nombre y edad'); return; }
+  STATE.profile.nombre = nombre;
+  STATE.profile.edad = parseInt(edad);
+  STATE.profile.sexo = selectedSex || 'No especificado';
+  goTo('s-body');
+}
+
+function nextFromBody() {
+  const peso = document.getElementById('f-peso').value.trim();
+  const altura = document.getElementById('f-altura').value.trim();
+  if (!peso || !altura) { alert('Por favor completa tu peso y altura'); return; }
+  STATE.profile.peso = peso + weightUnit;
+  STATE.profile.altura = altura + heightUnit;
+  goTo('s-health');
+}
+
+function nextFromHealth() {
+  const conds = [...document.querySelectorAll('#conditions-row .tag.selected')].map(t => t.textContent);
+  const meds = document.getElementById('f-meds').value.trim();
+  STATE.profile.condiciones = conds.length ? conds.join(', ') : 'Ninguna declarada';
+  STATE.profile.medicamentos = meds || 'Ninguno declarado';
+  goTo('s-sleep');
+}
+
+function nextFromSleep() {
+  const note = document.getElementById('f-sleep-note').value.trim();
+  STATE.profile.sueno = selectedSleep.length ? selectedSleep.join(', ') : 'No especificado';
+  if (note) STATE.profile.suenoNota = note;
+  goTo('s-ready');
+}
+
+function finishOnboarding() {
+  if (!selectedReadiness) { alert('Por favor selecciona una opción'); return; }
+  STATE.profile.disposicion = selectedReadiness;
+  STATE.onboarded = true;
+  STATE.lastInsightWeek = null;
+  STATE.insightsThisWeek = 0;
+  saveState();
+  renderHome();
+  goTo('s-home');
+  generateInsight();
+}
+
+// ─── GREETING ────────────────────────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Buenos días,';
+  if (h < 19) return 'Buenas tardes,';
+  return 'Buenas noches,';
+}
+
+// ─── CURRENT WEEK KEY ────────────────────────────────────────────────────────
+function getWeekKey() {
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+
+function isBiWeekDue() {
+  if (!STATE.lastProgressNoteDate) return false;
+  const last = new Date(STATE.lastProgressNoteDate);
+  const now = new Date();
+  const diffDays = (now - last) / 86400000;
+  return diffDays >= 14 && STATE.insights.length >= 2;
+}
+
+// ─── BUILD PROFILE CONTEXT ───────────────────────────────────────────────────
+function buildProfileContext() {
+  const p = STATE.profile;
+  const d = STATE.deepProfile;
+  const answers = STATE.weeklyAnswers.slice(-6).map(a => `- ${a.q}: ${a.a}`).join('\n');
+  const prevInsights = STATE.insights.slice(-4).map(i => `- [${i.tipo}] ${i.dominio}: ${i.titulo}`).join('\n');
+
+  return `
+Nombre: ${p.nombre || '?'}
+Edad: ${p.edad || '?'}
+Sexo: ${p.sexo || '?'}
+Peso: ${p.peso || '?'} | Altura: ${p.altura || '?'}
+Condiciones: ${p.condiciones || 'Ninguna'}
+Medicamentos: ${p.medicamentos || 'Ninguno'}
+Sueño: ${p.sueno || '?'}${p.suenoNota ? ' — ' + p.suenoNota : ''}
+Disposición al cambio: ${p.disposicion || '?'}
+${d.dieta ? 'Dieta: ' + d.dieta : ''}
+${d.manana ? 'Consumo matutino: ' + d.manana : ''}
+${d.comerFuera ? 'Come fuera: ' + d.comerFuera : ''}
+${d.alcohol ? 'Alcohol: ' + d.alcohol : ''}
+${d.agua ? 'Hidratación: ' + d.agua : ''}
+${d.extra ? 'Contexto adicional: ' + d.extra : ''}
+${answers ? 'Respuestas semanales previas:\n' + answers : ''}
+${prevInsights ? 'Insights previos (no repetir estos dominios esta semana):\n' + prevInsights : ''}`.trim();
+}
+
+// ─── GENERATE INSIGHT ────────────────────────────────────────────────────────
+async function generateInsight(isExtra = false) {
+  const weekKey = getWeekKey();
+
+  if (!isExtra && STATE.lastInsightWeek === weekKey && STATE.insights.length > 0) {
+    renderCurrentInsight();
+    renderExtraButton();
+    renderWeeklyQuestion();
+    checkProgressNote();
+    return;
+  }
+
+  if (isExtra && STATE.insightsThisWeek >= 2) {
+    showLimitMessage();
+    return;
+  }
+
+  const zone = document.getElementById('insight-zone');
+  zone.innerHTML = `<div class="loading-wrap"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loading-text">Generando tu insight...</p></div>`;
+
+  const profileCtx = buildProfileContext();
+  const lastTypes = STATE.insights.slice(-2).map(i => i.tipo);
+
+  const systemPrompt = `Eres un consejero de salud personalizado y directo. Generas UN insight semanal basado en el perfil real de la persona.
+
+REGLAS:
+- Escribe SOLO en español
+- Menciona al menos UN detalle específico del perfil — nombre, alimento, hábito concreto, medicamento
+- NUNCA uses consejos genéricos. Sé específico a esta persona
+- Tipo de insight — elige el más impactante. No repitas los tipos usados recientemente (${lastTypes.join(', ')}):
+  * Revelar: mostrar algo verdadero que no han conectado
+  * Reencuadrar: tomar algo que creen bueno/neutro y mostrarlo diferente  
+  * Reforzar: reconocer algo que hacen bien con el por qué detrás
+- Tono según disposición: "Listo para cambiar" = directo y técnico. "Despacio" = gentil y motivador. "Solo entender" = observacional y curioso
+- Máximo 3 oraciones en el cuerpo. Sin listas. Sin jerga médica compleja
+
+Responde SOLO con este JSON exacto, sin texto adicional:
+{
+  "tipo": "Revelar|Reencuadrar|Reforzar",
+  "dominio": "Ayuno|Sueño|Movimiento|Hidratación|Azúcar|Alcohol|Nutrición|Proteína|Metabolismo|Estrés",
+  "titulo": "una oración directa y específica, máximo 12 palabras",
+  "cuerpo": "dos o tres oraciones con el por qué, mencionando detalles reales del perfil"
+}`;
+
+  try {
+    const res = await apiFetch({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: `Genera un insight para:\n${profileCtx}` }]
+    });
+
+    const data = await res.json();
+    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const insight = JSON.parse(raw);
+    insight.date = new Date().toISOString();
+    insight.week = weekKey;
+
+    STATE.insights.push(insight);
+    if (!isExtra) {
+      STATE.lastInsightWeek = weekKey;
+      STATE.insightsThisWeek = 1;
+      STATE.weeklyAnswerSaved = false;
+      await generateWeeklyQuestion(insight);
+    } else {
+      STATE.insightsThisWeek++;
+    }
+    saveState();
+    renderCurrentInsight();
+    renderExtraButton();
+    if (!isExtra) renderWeeklyQuestion();
+    checkProgressNote();
+
+  } catch(e) {
+    zone.innerHTML = `<div class="insight-card"><p class="insight-domain">Error</p><p class="insight-title">No se pudo generar el insight</p><p class="insight-body">Verifica tu conexión e intenta de nuevo.</p></div>`;
+  }
+}
+
+// ─── RENDER INSIGHT ───────────────────────────────────────────────────────────
+function renderCurrentInsight() {
+  if (!STATE.insights.length) return;
+  const weekKey = getWeekKey();
+  const weekInsights = STATE.insights.filter(i => i.week === weekKey);
+  const zone = document.getElementById('insight-zone');
+
+  if (!weekInsights.length) {
+    zone.innerHTML = `<div class="loading-wrap"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loading-text">Generando tu insight...</p></div>`;
+    generateInsight();
+    return;
+  }
+
+  zone.innerHTML = weekInsights.map(ins => `
+    <div class="insight-card">
+      <p class="insight-domain">${ins.dominio}</p>
+      <p class="insight-title">${ins.titulo}</p>
+      <p class="insight-body">${ins.cuerpo}</p>
+      <span class="insight-type-badge type-${ins.tipo}">${ins.tipo}</span>
+    </div>`).join('');
+}
+
+// ─── EXTRA INSIGHT BUTTON ─────────────────────────────────────────────────────
+function renderExtraButton() {
+  const zone = document.getElementById('extra-btn-zone');
+  if (STATE.insightsThisWeek >= 2) {
+    zone.innerHTML = '';
+    return;
+  }
+  const remaining = 2 - STATE.insightsThisWeek;
+  zone.innerHTML = `
+    <button class="btn-secondary" style="margin-bottom:12px;" onclick="generateInsight(true)">
+      ✨ Ver otro insight
+      <span style="font-size:12px;color:var(--text-muted);margin-left:4px;">(${remaining} restante${remaining > 1 ? 's' : ''})</span>
+    </button>`;
+}
+
+function showLimitMessage() {
+  const zone = document.getElementById('extra-btn-zone');
+  zone.innerHTML = `
+    <div class="limit-msg">
+      <p class="limit-msg-text">Ya tienes suficiente para trabajar esta semana, ${STATE.profile.nombre || ''}. Enfócate en una cosa antes de agregar más.</p>
+    </div>`;
+}
+
+// ─── WEEKLY QUESTION ─────────────────────────────────────────────────────────
+async function generateWeeklyQuestion(insight) {
+  const profileCtx = buildProfileContext();
+  const askedBefore = STATE.weeklyAnswers.map(a => a.q);
+
+  try {
+    const res = await apiFetch({
+        model: "claude-sonnet-4-6",
+        max_tokens: 200,
+        system: `Genera UNA sola pregunta de seguimiento en español para profundizar el perfil de salud de esta persona.
+La pregunta debe:
+- Ser corta (máximo 15 palabras)
+- Relacionarse con el insight generado o con información que falta en el perfil
+- Ser conversacional, no clínica
+- NO ser respondible con sí/no
+- NO repetir preguntas ya hechas
+Responde SOLO con la pregunta, sin comillas ni texto adicional.`,
+        messages: [{ role: "user", content: `Perfil:\n${profileCtx}\nInsight esta semana: ${insight.titulo}\nPreguntas ya hechas: ${askedBefore.join(' | ')}` }]
+    });
+    const data = await res.json();
+    STATE.currentWeekQuestion = data.content[0].text.trim();
+  } catch(e) {
+    STATE.currentWeekQuestion = "¿Qué consumes desde que te levantas hasta tu primera comida?";
+  }
+}
+
+function renderWeeklyQuestion() {
+  const zone = document.getElementById('question-zone');
+  if (!STATE.currentWeekQuestion) { zone.style.display = 'none'; return; }
+  if (STATE.weeklyAnswerSaved) {
+    zone.innerHTML = `<p class="section-label">Esta semana te preguntamos</p>
+      <div class="question-card">
+        <p class="q-domain">Conocerte mejor</p>
+        <p class="q-text">${STATE.currentWeekQuestion}</p>
+        <p style="font-size:13px;color:var(--green);margin-top:4px;">✓ Respuesta guardada</p>
+      </div>`;
+    zone.style.display = 'block';
+    return;
+  }
+  document.getElementById('weekly-q-text').textContent = STATE.currentWeekQuestion;
+  zone.style.display = 'block';
+}
+
+function saveWeeklyAnswer() {
+  const ans = document.getElementById('weekly-answer').value.trim();
+  if (!ans) return;
+  STATE.weeklyAnswers.push({ q: STATE.currentWeekQuestion, a: ans, date: new Date().toISOString() });
+  STATE.weeklyAnswerSaved = true;
+  saveState();
+  renderWeeklyQuestion();
+}
+
+// ─── PROGRESS NOTE ────────────────────────────────────────────────────────────
+async function checkProgressNote() {
+  if (!isBiWeekDue()) return;
+  const zone = document.getElementById('progress-note-zone');
+  zone.innerHTML = `<p class="section-label">Tu progreso</p><div class="loading-wrap"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loading-text">Preparando tu nota de progreso...</p></div>`;
+
+  const recentInsights = STATE.insights.slice(-4).map(i => `[${i.tipo}] ${i.dominio}: ${i.titulo}`).join('\n');
+  const recentAnswers = STATE.weeklyAnswers.slice(-4).map(a => `P: ${a.q} R: ${a.a}`).join('\n');
+
+  try {
+    const res = await apiFetch({
+        model: "claude-sonnet-4-6",
+        max_tokens: 400,
+        system: `Eres un consejero de salud. Genera una nota de progreso bienal corta en español para ${STATE.profile.nombre}.
+Debe ser: 3-4 oraciones máximo. Mencionar qué temas se han explorado, qué parece estar mejorando, qué vale la pena seguir observando.
+Tono cálido pero directo. Sin listas. Sin jerga.
+Responde SOLO con el texto de la nota, sin títulos ni formato adicional.`,
+        messages: [{ role: "user", content: `Insights recientes:\n${recentInsights}\n\nRespuestas recientes:\n${recentAnswers}` }]
+    });
+    const data = await res.json();
+    const note = data.content[0].text.trim();
+    STATE.lastProgressNoteDate = new Date().toISOString();
+    saveState();
+    zone.innerHTML = `<p class="section-label">Tu progreso — últimas 2 semanas</p>
+      <div class="progress-card">
+        <p class="progress-title">📈 Nota de seguimiento</p>
+        <p class="progress-body">${note}</p>
+      </div>`;
+  } catch(e) {
+    zone.innerHTML = '';
+  }
+}
+
+// ─── RENDER HOME ──────────────────────────────────────────────────────────────
+function renderHome() {
+  document.getElementById('home-greeting').textContent = getGreeting();
+  document.getElementById('home-name').textContent = STATE.profile.nombre || '—';
+
+  const hasDeep = Object.keys(STATE.deepProfile).length > 0;
+  const banner = document.getElementById('profile-banner');
+  banner.classList.toggle('hidden', hasDeep && STATE.weeklyAnswers.length > 3);
+
+  const weekKey = getWeekKey();
+  const hasThisWeek = STATE.insights.some(i => i.week === weekKey);
+
+  if (hasThisWeek) {
+    renderCurrentInsight();
+    renderExtraButton();
+    renderWeeklyQuestion();
+    checkProgressNote();
+  } else {
+    document.getElementById('insight-zone').innerHTML = `<div class="loading-wrap"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loading-text">Generando tu insight de esta semana...</p></div>`;
+    STATE.insightsThisWeek = 0;
+    generateInsight();
+  }
+}
+
+// ─── RENDER PROFILE ───────────────────────────────────────────────────────────
+function renderProfile() {
+  document.getElementById('profile-name').textContent = STATE.profile.nombre || '—';
+  const p = STATE.profile;
+  const d = STATE.deepProfile;
+  const items = [
+    p.edad ? [`👤`, `${p.edad} años · ${p.sexo || ''}`] : null,
+    p.peso ? [`⚖️`, `${p.peso} · ${p.altura}`] : null,
+    p.condiciones && p.condiciones !== 'Ninguna declarada' ? [`🏥`, p.condiciones] : null,
+    p.medicamentos && p.medicamentos !== 'Ninguno declarado' ? [`💊`, p.medicamentos] : null,
+    p.sueno ? [`🌙`, p.sueno + (p.suenoNota ? ' — ' + p.suenoNota : '')] : null,
+    d.dieta ? [`🥩`, d.dieta] : null,
+    d.manana ? [`☕`, `Mañana: ${d.manana}`] : null,
+    d.comerFuera ? [`🍽️`, `Come fuera: ${d.comerFuera}`] : null,
+    d.alcohol ? [`🍺`, `Alcohol: ${d.alcohol}`] : null,
+    d.agua ? [`💧`, `Hidratación: ${d.agua}`] : null,
+    STATE.weeklyAnswers.length ? [`💬`, `${STATE.weeklyAnswers.length} respuesta${STATE.weeklyAnswers.length > 1 ? 's' : ''} semanales guardadas`] : null,
+  ].filter(Boolean);
+
+  const container = document.getElementById('profile-items');
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div>Completa tu perfil para ver tu información aquí</div>`;
+    return;
+  }
+  container.innerHTML = items.map(([ico, text]) => `
+    <div class="profile-item">
+      <span class="profile-ico">${ico}</span>
+      <span>${text}</span>
+    </div>`).join('');
+}
+
+// ─── RENDER HISTORY ───────────────────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!STATE.insights.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>Aquí aparecerán tus insights anteriores semana a semana</div>`;
+    return;
+  }
+  const reversed = [...STATE.insights].reverse();
+  list.innerHTML = reversed.map((ins, i) => {
+    const d = new Date(ins.date);
+    const dateStr = d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+    return `<div class="history-card">
+      <p class="history-week">${dateStr}</p>
+      <p class="history-title">${ins.titulo}</p>
+      <p class="history-domain">${ins.dominio} · ${ins.tipo}</p>
+    </div>`;
+  }).join('');
+}
+
+// ─── DEEP PROFILE LOAD/SAVE ───────────────────────────────────────────────────
+function loadDeepProfile() {
+  const d = STATE.deepProfile;
+  if (d.dieta) document.getElementById('d-dieta').value = d.dieta;
+  if (d.manana) document.getElementById('d-manana').value = d.manana;
+  if (d.extra) document.getElementById('d-extra').value = d.extra;
+
+  const eatMap = { 'Casi nunca':'Casi nunca', '1-2 veces por semana':'1-2 veces por semana', '3-4 veces por semana':'3-4 veces por semana', 'Casi todos los días':'Casi todos los días' };
+  document.querySelectorAll('#eat-out-row .tag').forEach(t => {
+    t.classList.toggle('selected', t.textContent === d.comerFuera);
+  });
+  document.querySelectorAll('#alcohol-row .tag').forEach(t => {
+    t.classList.toggle('selected', t.textContent === d.alcohol);
+  });
+  document.querySelectorAll('#water-row .tag').forEach(t => {
+    t.classList.toggle('selected', t.textContent === d.agua);
+  });
+}
+
+function saveDeepProfile() {
+  const d = {};
+  const dieta = document.getElementById('d-dieta').value.trim();
+  const manana = document.getElementById('d-manana').value.trim();
+  const extra = document.getElementById('d-extra').value.trim();
+  if (dieta) d.dieta = dieta;
+  if (manana) d.manana = manana;
+  if (extra) d.extra = extra;
+
+  const eatOut = document.querySelector('#eat-out-row .tag.selected');
+  if (eatOut) d.comerFuera = eatOut.textContent;
+
+  const alcohol = document.querySelector('#alcohol-row .tag.selected');
+  if (alcohol) d.alcohol = alcohol.textContent;
+
+  const water = document.querySelector('#water-row .tag.selected');
+  if (water) d.agua = water.textContent;
+
+  STATE.deepProfile = { ...STATE.deepProfile, ...d };
+  STATE.lastInsightWeek = null; // force regeneration with new context
+  saveState();
+  switchTab('home');
+}
+
+// ─── API KEY ─────────────────────────────────────────────────────────────────
+function getApiKey() {
+  return localStorage.getItem('salud_api_key') || '';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('f-apikey').value.trim();
+  const err = document.getElementById('key-error');
+  if (!val.startsWith('sk-ant-') || val.length < 20) {
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  localStorage.setItem('salud_api_key', val);
+  if (STATE.onboarded) {
+    renderHome();
+    goTo('s-home');
+  } else {
+    goTo('s-welcome');
+  }
+}
+
+function apiFetch(body) {
+  return fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": getApiKey(),
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify(body)
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+loadState();
+const hasKey = !!getApiKey();
+if (!hasKey) {
+  goTo('s-key');
+} else if (STATE.onboarded) {
+  renderHome();
+  goTo('s-home');
+} else {
+  goTo('s-welcome');
+}
+</script>
+</body>
+</html>
