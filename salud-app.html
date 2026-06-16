@@ -278,22 +278,25 @@
   .insight-body { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
   .acciones-wrap { margin-top: 16px; border-top: 0.5px solid var(--border); padding-top: 12px; }
   .acciones-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
-  .accion-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .accion-ico { font-size: 18px; flex-shrink: 0; }
+  .accion-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; padding: 12px; background: var(--surface); border-radius: 12px; }
+  .accion-top { display: flex; align-items: flex-start; gap: 10px; }
+  .accion-ico { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
   .accion-texto { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
-  .accion-btn {
-    flex-shrink: 0;
-    background: var(--green);
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
+  .accion-btns { display: flex; gap: 8px; }
+  .accion-btn-yes {
+    flex: 1; background: var(--green); color: #fff;
+    border: none; border-radius: 20px; padding: 8px 12px;
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
   }
+  .accion-btn-no {
+    flex: 1; background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 20px; padding: 8px 12px;
+    font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer;
+  }
+  .accion-row.aceptada .accion-btns { display: none; }
+  .accion-row.aceptada .accion-ico::after { content: ' ✓'; font-size: 12px; color: var(--green); }
+  .accion-row.rechazada { opacity: 0.4; }
+  .accion-row.rechazada .accion-btns { display: none; }
   .insight-type-badge {
     display: inline-block; margin-top: 12px;
     font-size: 11px; padding: 4px 12px;
@@ -1112,14 +1115,55 @@ function renderCurrentInsight() {
       ${ins.acciones && ins.acciones.length ? `
         <div class="acciones-wrap">
           <p class="acciones-label">Qué hacer</p>
-          ${ins.acciones.map((a, ai) => `
-            <div class="accion-row">
-              <span class="accion-ico">${a.tipo === 'recordatorio' ? '⏰' : '✅'}</span>
-              <span class="accion-texto">${a.hora ? `<strong>${a.hora}</strong> — ` : ''}${a.texto}</span>
-              ${a.tipo === 'recordatorio' && a.hora ? `<button class="accion-btn" onclick="addReminder(${idx},${ai})">+ Recordatorio</button>` : ''}
-            </div>`).join('')}
+          ${ins.acciones.map((a, ai) => {
+            const estado = (ins.accionEstados || {})[ai] || '';
+            const isReminder = a.tipo === 'recordatorio' && a.hora;
+            return `
+            <div class="accion-row ${estado}" id="accion-${idx}-${ai}">
+              <div class="accion-top">
+                <span class="accion-ico">${a.tipo === 'recordatorio' ? '⏰' : '✅'}</span>
+                <span class="accion-texto">${a.hora ? `<strong>${a.hora}</strong> — ` : ''}${a.texto}</span>
+              </div>
+              ${!estado ? `<div class="accion-btns">
+                <button class="accion-btn-yes" onclick="accionAceptar(${idx},${ai},${isReminder})">¡Lo hago!</button>
+                <button class="accion-btn-no" onclick="accionRechazar(${idx},${ai})">Ahora no</button>
+              </div>` : ''}
+            </div>`;
+          }).join('')}
         </div>` : ''}
     </div>`).join('');
+}
+
+// ─── ACCION ACCEPT / DECLINE ─────────────────────────────────────────────────
+function accionAceptar(insightIdx, accionIdx, isReminder) {
+  const weekKey = getWeekKey();
+  const weekInsights = STATE.insights.filter(i => i.week === weekKey);
+  const ins = weekInsights[insightIdx];
+  if (!ins) return;
+  if (!ins.accionEstados) ins.accionEstados = {};
+  ins.accionEstados[accionIdx] = 'aceptada';
+  saveState();
+  const row = document.getElementById(`accion-${insightIdx}-${accionIdx}`);
+  if (row) {
+    row.classList.add('aceptada');
+    row.querySelector('.accion-btns')?.remove();
+  }
+  if (isReminder) addReminder(insightIdx, accionIdx);
+}
+
+function accionRechazar(insightIdx, accionIdx) {
+  const weekKey = getWeekKey();
+  const weekInsights = STATE.insights.filter(i => i.week === weekKey);
+  const ins = weekInsights[insightIdx];
+  if (!ins) return;
+  if (!ins.accionEstados) ins.accionEstados = {};
+  ins.accionEstados[accionIdx] = 'rechazada';
+  saveState();
+  const row = document.getElementById(`accion-${insightIdx}-${accionIdx}`);
+  if (row) {
+    row.classList.add('rechazada');
+    row.querySelector('.accion-btns')?.remove();
+  }
 }
 
 // ─── ADD REMINDER (ICS) ───────────────────────────────────────────────────────
