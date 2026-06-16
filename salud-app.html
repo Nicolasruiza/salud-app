@@ -55,7 +55,7 @@
   }
 
   /* SCREENS */
-  .screen { display: none; flex-direction: column; flex: 1; min-height: 100vh; }
+  .screen { display: none; flex-direction: column; flex: 1; height: 100vh; max-height: 100vh; overflow: hidden; }
   .screen.active { display: flex; }
 
   /* SAFE AREAS */
@@ -68,6 +68,8 @@
     display: flex;
     flex-direction: column;
     padding: 0 28px 32px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .progress-track {
@@ -402,7 +404,7 @@
       <div style="width:100%;text-align:left;margin-bottom:6px;">
         <p class="field-label">Pega tu clave aquí</p>
       </div>
-      <input class="field" type="password" id="f-apikey" placeholder="sk-ant-..." style="font-size:14px;letter-spacing:0.5px;" />
+      <input class="field" type="password" id="f-apikey" placeholder="sk-ant-..." style="font-size:16px;letter-spacing:0.5px;padding:16px;height:56px;" />
       <div id="key-error" style="color:#C17B5C;font-size:13px;margin-top:-8px;margin-bottom:12px;display:none;">
         La clave no parece válida. Verifica que la copiaste completa.
       </div>
@@ -630,9 +632,13 @@
     <div class="scroll-body">
       <p class="section-label">Lo que sabemos de ti</p>
       <div id="profile-items"></div>
-      <p class="section-label mt-16">Agregar contexto</p>
+      <p class="section-label mt-16">Acciones</p>
       <button class="btn-secondary" onclick="goDeepProfile()">
         <span>＋</span> Completar mi perfil
+      </button>
+      <div style="height:8px;"></div>
+      <button class="btn-secondary" onclick="editBasicProfile()" style="color:var(--text-muted);">
+        <span>✏️</span> Editar datos básicos
       </button>
       <div style="height:16px;"></div>
     </div>
@@ -759,6 +765,25 @@ function loadState() {
   if (raw) {
     try { STATE = { ...STATE, ...JSON.parse(raw) }; } catch(e) {}
   }
+  dedupeInsights();
+}
+
+// Removes duplicate insights generated for the same week+domain (e.g. from
+// a past race condition that fired two simultaneous generations).
+function dedupeInsights() {
+  const seen = new Set();
+  const before = STATE.insights.length;
+  STATE.insights = STATE.insights.filter(ins => {
+    const key = `${ins.week}|${ins.dominio}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (STATE.insights.length !== before) {
+    const weekKey = getWeekKey();
+    STATE.insightsThisWeek = STATE.insights.filter(i => i.week === weekKey).length;
+    saveState();
+  }
 }
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
@@ -777,6 +802,16 @@ function switchTab(tab) {
 }
 
 function goDeepProfile() { goTo('s-deep'); loadDeepProfile(); }
+
+function editBasicProfile() {
+  // Pre-fill onboarding fields with existing values so user can update them
+  goTo('s-name');
+  const p = STATE.profile;
+  setTimeout(() => {
+    if (p.nombre) document.getElementById('f-name').value = p.nombre;
+    if (p.edad) document.getElementById('f-age').value = p.edad;
+  }, 0);
+}
 
 // ─── ONBOARDING STATE ────────────────────────────────────────────────────────
 let selectedSex = '';
@@ -884,7 +919,6 @@ function finishOnboarding() {
   saveState();
   renderHome();
   goTo('s-home');
-  generateInsight();
 }
 
 // ─── GREETING ────────────────────────────────────────────────────────────────
@@ -959,6 +993,8 @@ async function generateInsight(isExtra = false) {
 
   const profileCtx = buildProfileContext();
   const lastTypes = STATE.insights.slice(-2).map(i => i.tipo);
+  const lastDomains = STATE.insights.slice(-2).map(i => i.dominio);
+  const lastTitles = STATE.insights.slice(-4).map(i => i.titulo);
 
   const systemPrompt = `Eres un consejero de salud personalizado y directo. Generas UN insight semanal basado en el perfil real de la persona.
 
@@ -966,9 +1002,12 @@ REGLAS:
 - Escribe SOLO en español
 - Menciona al menos UN detalle específico del perfil — nombre, alimento, hábito concreto, medicamento
 - NUNCA uses consejos genéricos. Sé específico a esta persona
-- Tipo de insight — elige el más impactante. No repitas los tipos usados recientemente (${lastTypes.join(', ')}):
+- PROHIBIDO usar estos dominios (ya usados recientemente): ${lastDomains.length ? lastDomains.join(', ') : 'ninguno'}
+- PROHIBIDO usar estos tipos (ya usados recientemente): ${lastTypes.length ? lastTypes.join(', ') : 'ninguno'}
+- PROHIBIDO repetir el tema o el ángulo de estos títulos previos (deben ser claramente distintos, no reformulaciones): ${lastTitles.length ? lastTitles.map(t => `"${t}"`).join(', ') : 'ninguno'}
+- Tipos disponibles (elige uno permitido, el más impactante):
   * Revelar: mostrar algo verdadero que no han conectado
-  * Reencuadrar: tomar algo que creen bueno/neutro y mostrarlo diferente  
+  * Reencuadrar: tomar algo que creen bueno/neutro y mostrarlo diferente
   * Reforzar: reconocer algo que hacen bien con el por qué detrás
 - Tono según disposición: "Listo para cambiar" = directo y técnico. "Despacio" = gentil y motivador. "Solo entender" = observacional y curioso
 - Máximo 3 oraciones en el cuerpo. Sin listas. Sin jerga médica compleja
@@ -982,16 +1021,26 @@ Responde SOLO con este JSON exacto, sin texto adicional:
 }`;
 
   try {
-    const res = await apiFetch({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: "user", content: `Genera un insight para:\n${profileCtx}` }]
-    });
+    let insight = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const res = await apiFetch({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: `Genera un insight para:\n${profileCtx}${attempt > 0 ? '\n\nIMPORTANTE: tu respuesta anterior repitió un dominio, tipo o tema ya usado. Elige un dominio, tipo y ángulo completamente diferentes.' : ''}` }]
+      });
 
-    const data = await res.json();
-    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
-    const insight = JSON.parse(raw);
+      const data = await res.json();
+      const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+      const candidate = JSON.parse(raw);
+
+      const repeated = lastDomains.includes(candidate.dominio) || lastTypes.includes(candidate.tipo);
+      if (!repeated || attempt === 2) {
+        insight = candidate;
+        break;
+      }
+    }
+
     insight.date = new Date().toISOString();
     insight.week = weekKey;
 
