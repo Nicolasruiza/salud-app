@@ -276,6 +276,24 @@
   }
   .insight-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
   .insight-body { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .acciones-wrap { margin-top: 16px; border-top: 0.5px solid var(--border); padding-top: 12px; }
+  .acciones-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .accion-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .accion-ico { font-size: 18px; flex-shrink: 0; }
+  .accion-texto { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
+  .accion-btn {
+    flex-shrink: 0;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
   .insight-type-badge {
     display: inline-block; margin-top: 12px;
     font-size: 11px; padding: 4px 12px;
@@ -1011,13 +1029,21 @@ REGLAS:
   * Reforzar: reconocer algo que hacen bien con el por qué detrás
 - Tono según disposición: "Listo para cambiar" = directo y técnico. "Despacio" = gentil y motivador. "Solo entender" = observacional y curioso
 - Máximo 3 oraciones en el cuerpo. Sin listas. Sin jerga médica compleja
+- Genera entre 1 y 3 acciones concretas. Cada acción debe ser específica, realizable HOY. Para recordatorios incluye siempre una hora concreta (HH:MM). Ejemplos de buenas acciones:
+  * recordatorio a las 22:00 — "Deja el teléfono fuera del cuarto"
+  * recordatorio a las 11:30 — "Prepara tu fuente de proteína para el almuerzo"
+  * habito — "Toma un vaso de agua antes de cada comida"
+  * recordatorio a las 07:30 — "Pesa tu desayuno antes de comer"
 
 Responde SOLO con este JSON exacto, sin texto adicional:
 {
   "tipo": "Revelar|Reencuadrar|Reforzar",
   "dominio": "Ayuno|Sueño|Movimiento|Hidratación|Azúcar|Alcohol|Nutrición|Proteína|Metabolismo|Estrés",
   "titulo": "una oración directa y específica, máximo 12 palabras",
-  "cuerpo": "dos o tres oraciones con el por qué, mencionando detalles reales del perfil"
+  "cuerpo": "dos o tres oraciones con el por qué, mencionando detalles reales del perfil",
+  "acciones": [
+    {"texto": "descripción corta y concreta de la acción", "tipo": "recordatorio|habito", "hora": "HH:MM o null"}
+  ]
 }`;
 
   try {
@@ -1077,13 +1103,72 @@ function renderCurrentInsight() {
     return;
   }
 
-  zone.innerHTML = weekInsights.map(ins => `
+  zone.innerHTML = weekInsights.map((ins, idx) => `
     <div class="insight-card">
       <p class="insight-domain">${ins.dominio}</p>
       <p class="insight-title">${ins.titulo}</p>
       <p class="insight-body">${ins.cuerpo}</p>
       <span class="insight-type-badge type-${ins.tipo}">${ins.tipo}</span>
+      ${ins.acciones && ins.acciones.length ? `
+        <div class="acciones-wrap">
+          <p class="acciones-label">Qué hacer</p>
+          ${ins.acciones.map((a, ai) => `
+            <div class="accion-row">
+              <span class="accion-ico">${a.tipo === 'recordatorio' ? '⏰' : '✅'}</span>
+              <span class="accion-texto">${a.hora ? `<strong>${a.hora}</strong> — ` : ''}${a.texto}</span>
+              ${a.tipo === 'recordatorio' && a.hora ? `<button class="accion-btn" onclick="addReminder(${idx},${ai})">+ Recordatorio</button>` : ''}
+            </div>`).join('')}
+        </div>` : ''}
     </div>`).join('');
+}
+
+// ─── ADD REMINDER (ICS) ───────────────────────────────────────────────────────
+function addReminder(insightIdx, accionIdx) {
+  const weekKey = getWeekKey();
+  const weekInsights = STATE.insights.filter(i => i.week === weekKey);
+  const ins = weekInsights[insightIdx];
+  if (!ins || !ins.acciones) return;
+  const a = ins.acciones[accionIdx];
+  if (!a || !a.hora) return;
+
+  const [hh, mm] = a.hora.split(':').map(Number);
+  const now = new Date();
+  // Schedule for today at the given time; if already past, schedule tomorrow
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+  if (start < now) start.setDate(start.getDate() + 1);
+
+  const fmt = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const uid = `salud-${Date.now()}@app`;
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//SaludApp//ES',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(new Date(start.getTime() + 15 * 60000))}`,
+    `SUMMARY:${a.texto}`,
+    `DESCRIPTION:${ins.titulo}`,
+    'RRULE:FREQ=DAILY',
+    'BEGIN:VALARM',
+    'TRIGGER:PT0S',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${a.texto}`,
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'recordatorio.ics';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // ─── EXTRA INSIGHT BUTTON ─────────────────────────────────────────────────────
