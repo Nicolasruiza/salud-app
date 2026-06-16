@@ -565,7 +565,7 @@
   <div class="screen" id="s-name">
     <div class="safe-top" style="flex-shrink:0;"></div>
     <div class="onboard-wrap">
-      <button class="back-btn" onclick="goTo('s-welcome')"><span class="back-arrow">‹</span> Atrás</button>
+      <button class="back-btn" onclick="backFromNameScreen()"><span class="back-arrow">‹</span> Atrás</button>
       <div class="progress-track"><div class="progress-fill" style="width:16%"></div></div>
       <h2 class="q-label">¿Cómo te llamas?</h2>
       <p class="q-sub">Así sabremos cómo dirigirnos a ti</p>
@@ -942,13 +942,60 @@ function switchTab(tab) {
 
 function goDeepProfile() { goTo('s-deep'); loadDeepProfile(); }
 
+function backFromNameScreen() {
+  if (STATE.onboarded) switchTab('profile');
+  else goTo('s-welcome');
+}
+
 function editBasicProfile() {
-  // Pre-fill onboarding fields with existing values so user can update them
   goTo('s-name');
   const p = STATE.profile;
   setTimeout(() => {
-    if (p.nombre) document.getElementById('f-name').value = p.nombre;
-    if (p.edad) document.getElementById('f-age').value = p.edad;
+    // NAME + AGE + SEX
+    if (p.nombre) document.getElementById('f-nombre').value = p.nombre;
+    if (p.edad)   document.getElementById('f-edad').value   = p.edad;
+    if (p.sexo)   setSex(p.sexo);
+
+    // BODY — parse "70kg" / "154lb"
+    if (p.peso) {
+      const m = String(p.peso).match(/^([\d.]+)(.+)$/);
+      if (m) { setWeightUnit(m[2]); document.getElementById('f-peso').value = m[1]; }
+    }
+    if (p.altura) {
+      const m = String(p.altura).match(/^([\d.]+)(.+)$/);
+      if (m) { setHeightUnit(m[2]); document.getElementById('f-altura').value = m[1]; }
+    }
+
+    // HEALTH — conditions tags
+    if (p.condiciones) {
+      const conds = p.condiciones.split(', ').map(s => s.trim());
+      document.querySelectorAll('#conditions-row .tag').forEach(t => {
+        t.classList.toggle('selected', conds.includes(t.textContent.trim()));
+      });
+    }
+    const meds = document.getElementById('f-meds');
+    if (meds && p.medicamentos && p.medicamentos !== 'Ninguno declarado') meds.value = p.medicamentos;
+
+    // SLEEP — match option cards by onclick value
+    if (p.sueno) {
+      const suenoVals = p.sueno.split(', ').map(s => s.trim().toLowerCase());
+      selectedSleep = p.sueno.split(', ').map(s => s.trim());
+      document.querySelectorAll('#sleep-opts .option-card').forEach(c => {
+        const m = c.getAttribute('onclick').match(/'([^']+)'\s*\)/);
+        if (m && suenoVals.includes(m[1].toLowerCase())) c.classList.add('selected');
+      });
+    }
+    const sleepNote = document.getElementById('f-sleep-note');
+    if (sleepNote && p.suenoNota) sleepNote.value = p.suenoNota;
+
+    // READINESS
+    if (p.disposicion) {
+      selectedReadiness = p.disposicion;
+      document.querySelectorAll('#ready-opts .option-card').forEach(c => {
+        const m = c.getAttribute('onclick').match(/'([^']+)'\s*\)/);
+        c.classList.toggle('selected', !!(m && m[1] === p.disposicion));
+      });
+    }
   }, 0);
 }
 
@@ -1052,12 +1099,20 @@ function nextFromSleep() {
 function finishOnboarding() {
   if (!selectedReadiness) { alert('Por favor selecciona una opción'); return; }
   STATE.profile.disposicion = selectedReadiness;
+  const wasEditing = STATE.onboarded;
   STATE.onboarded = true;
-  STATE.lastInsightWeek = null;
-  STATE.insightsThisWeek = 0;
+  if (!wasEditing) {
+    STATE.lastInsightWeek = null;
+    STATE.insightsThisWeek = 0;
+  }
   saveState();
-  renderHome();
-  goTo('s-home');
+  if (wasEditing) {
+    renderProfile();
+    switchTab('profile');
+  } else {
+    renderHome();
+    goTo('s-home');
+  }
 }
 
 // ─── GREETING ────────────────────────────────────────────────────────────────
@@ -1371,7 +1426,25 @@ function renderHabitsDashboard() {
   const zone = document.getElementById('habits-dashboard');
   if (!zone) return;
   const habits = getAcceptedHabits();
-  if (!habits.length) { zone.innerHTML = ''; return; }
+  if (!habits.length) {
+    zone.innerHTML = `
+      <p class="habits-section-label">Mis hábitos</p>
+      <div class="habits-progress-card" style="opacity:0.65;">
+        <div class="habits-ring-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="ring-track" cx="36" cy="36" r="30"/>
+          </svg>
+          <div class="ring-label">
+            <span class="ring-pct" style="font-size:13px;color:var(--text-muted)">—</span>
+          </div>
+        </div>
+        <div class="habits-progress-meta">
+          <p class="habits-progress-title">Sin hábitos aún</p>
+          <p class="habits-progress-sub">Acepta una acción de tu próximo insight y aparecerá aquí como hábito a seguir.</p>
+        </div>
+      </div>`;
+    return;
+  }
 
   const weekKey = getWeekKey();
   const checkins = STATE.habitCheckins[weekKey] || {};
