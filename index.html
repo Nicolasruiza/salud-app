@@ -250,62 +250,141 @@
   .privacy-note { font-size: 12px; color: var(--text-muted); margin-top: 14px; }
 
   /* HOME SCREEN */
+  /* ── HOME HEADER — Apple-style large title ── */
   .home-header {
-    padding: 16px 24px 8px;
+    padding: 20px 20px 4px;
     flex-shrink: 0;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
   }
   .home-header-text { flex: 1; }
-  .greeting { font-size: 13px; color: var(--text-secondary); margin-bottom: 2px; }
-  .user-name { font-size: 24px; font-weight: 600; color: var(--text); letter-spacing: -0.4px; }
+  .greeting { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 1px; }
+  .user-name {
+    font-size: 32px; font-weight: 700; color: var(--text);
+    letter-spacing: -1px; line-height: 1.1;
+  }
   .profile-avatar-btn {
-    width: 40px; height: 40px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     background: var(--green); color: #fff;
     border: none; cursor: pointer;
-    font-size: 17px; font-weight: 700;
+    font-size: 18px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 2px;
-    box-shadow: 0 2px 8px rgba(52,199,89,0.3);
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(52,199,89,0.35);
     font-family: inherit;
+    transition: transform 0.15s;
   }
+  .profile-avatar-btn:active { transform: scale(0.93); }
 
-  .scroll-body { flex: 1; overflow-y: auto; padding: 0 24px 16px; -webkit-overflow-scrolling: touch; }
+  .scroll-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; -webkit-overflow-scrolling: touch; }
 
   .section-label {
-    font-size: 11px; font-weight: 600; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.6px;
-    margin: 16px 0 10px;
+    font-size: 20px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.5px;
+    margin: 20px 0 10px;
   }
 
   /* BANNER */
   .banner {
-    margin: 4px 24px 8px;
-    background: var(--green-light);
-    border: 0.5px solid var(--green);
-    border-radius: 12px; padding: 12px 16px;
+    margin: 8px 20px;
+    background: #F0FBF3;
+    border: none;
+    border-radius: 14px; padding: 12px 16px;
     display: flex; align-items: center; gap: 10px;
     cursor: pointer; flex-shrink: 0;
   }
-  .banner-text { font-size: 13px; color: var(--green-dark); line-height: 1.4; flex: 1; }
+  .banner-text { font-size: 13px; color: var(--green-dark); line-height: 1.4; flex: 1; font-weight: 500; }
   .banner-arrow { font-size: 16px; color: var(--green); flex-shrink: 0; }
   .banner.hidden { display: none; }
 
-  /* INSIGHT CARD */
+  /* ── INSIGHT CARD — prescription style ── */
   .insight-card {
     background: var(--white);
-    border-radius: 20px;
-    box-shadow: var(--shadow);
-    padding: 20px;
-    margin-bottom: 12px;
+    border-radius: 22px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    padding: 0;
+    margin-bottom: 14px;
+    overflow: hidden;
   }
-  .insight-domain {
-    font-size: 11px; font-weight: 700; color: var(--green-dark);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
+  .insight-header {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 0.5px solid #F2F2F7;
   }
-  .insight-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 8px; line-height: 1.35; letter-spacing: -0.2px; }
-  .insight-body { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .insight-domain-icon { font-size: 22px; }
+  .insight-domain-name {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .insight-tipo-pill {
+    margin-left: auto; font-size: 11px; font-weight: 500;
+    color: var(--text-muted); background: #F2F2F7;
+    border-radius: 20px; padding: 3px 10px;
+  }
+
+  /* Action block — the hero of the card */
+  .insight-action-block {
+    padding: 20px 20px 16px;
+  }
+  .insight-action-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; margin-bottom: 8px; opacity: 0.75;
+  }
+  .insight-action-time {
+    font-size: 42px; font-weight: 800; letter-spacing: -2px;
+    line-height: 1; margin-bottom: 6px;
+  }
+  .insight-action-text {
+    font-size: 17px; font-weight: 600; color: var(--text);
+    line-height: 1.4; letter-spacing: -0.2px;
+  }
+
+  /* Why block */
+  .insight-why-block {
+    padding: 14px 20px 16px;
+    border-top: 0.5px solid #F2F2F7;
+    background: #FAFAFA;
+  }
+  .insight-why-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 6px;
+  }
+  .insight-why-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* Decision buttons */
+  .insight-btns {
+    padding: 14px 20px 18px;
+    display: flex; gap: 10px;
+    background: var(--white);
+  }
+  .insight-btn-yes {
+    flex: 2; background: var(--green); color: #fff;
+    border: none; border-radius: 14px; padding: 13px;
+    font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .insight-btn-yes:active { opacity: 0.85; }
+  .insight-btn-no {
+    flex: 1; background: #F2F2F7; color: var(--text-secondary);
+    border: none; border-radius: 14px; padding: 13px;
+    font-size: 15px; font-weight: 500; font-family: inherit; cursor: pointer;
+  }
+
+  /* Committed state */
+  .insight-committed {
+    padding: 14px 20px 18px;
+    display: flex; align-items: center; gap: 10px;
+    background: #F0FBF3;
+  }
+  .insight-committed-text { font-size: 15px; font-weight: 600; color: #248A3D; flex: 1; }
+  .insight-reminder-btn {
+    font-size: 13px; font-weight: 600; color: var(--green);
+    background: none; border: 1.5px solid var(--green); border-radius: 20px;
+    padding: 6px 14px; cursor: pointer; font-family: inherit;
+  }
+
+  .insight-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 8px; line-height: 1.35; letter-spacing: -0.2px; padding: 0 20px; }
+  .insight-body { font-size: 14px; color: var(--text-secondary); line-height: 1.6; padding: 0 20px 16px; }
   /* ── HABITS DASHBOARD ── */
   .dash-section-title {
     font-size: 13px; font-weight: 600; color: var(--text-muted);
@@ -1305,72 +1384,58 @@ function renderCurrentInsight() {
   zone.innerHTML = weekInsights.map((ins, idx) => {
     const ds = domainStyle(ins.dominio);
     const tipoLabel = { Revelar: 'Descubrimiento', Reencuadrar: 'Nueva perspectiva', Reforzar: 'Lo estás haciendo bien' }[ins.tipo] || ins.tipo;
-
-    // Support both new format (ins.accion) and old multi-action format (ins.acciones)
     const hasNewFormat = ins.accion && ins.accion.texto;
-    const estado = hasNewFormat ? ((ins.accionEstados || {})[0] || '') : '';
+    const estado = (ins.accionEstados || {})[0] || '';
     const isReminder = hasNewFormat && ins.accion.tipo === 'recordatorio' && ins.accion.hora;
 
+    if (hasNewFormat) {
+      return `
+      <div class="insight-card">
+        <div class="insight-header">
+          <span class="insight-domain-icon">${ds.icon}</span>
+          <span class="insight-domain-name" style="color:${ds.color};">${ins.dominio}</span>
+          <span class="insight-tipo-pill">${tipoLabel}</span>
+        </div>
+        <div class="insight-action-block" style="background:${ds.bg};">
+          <p class="insight-action-label" style="color:${ds.color};">
+            ${ins.accion.tipo === 'recordatorio' ? '⏰' : '✅'} Tu tarea de esta semana
+          </p>
+          ${ins.accion.hora ? `<p class="insight-action-time" style="color:${ds.color};">${ins.accion.hora}</p>` : ''}
+          <p class="insight-action-text">${ins.accion.texto}</p>
+        </div>
+        <div class="insight-why-block">
+          <p class="insight-why-label">Por qué importa</p>
+          <p class="insight-why-text">${ins.porQue || ins.cuerpo || ''}</p>
+        </div>
+        ${estado === '' ? `
+        <div class="insight-btns">
+          <button class="insight-btn-yes" onclick="accionAceptar(${idx},0,${isReminder})">¡Lo hago esta semana!</button>
+          <button class="insight-btn-no" onclick="accionRechazar(${idx},0)">Ahora no</button>
+        </div>` : estado === 'aceptada' ? `
+        <div class="insight-committed">
+          <span style="font-size:20px;">✅</span>
+          <span class="insight-committed-text">Comprometido esta semana</span>
+          ${isReminder ? `<button class="insight-reminder-btn" onclick="addReminder(${idx},0)">+ Recordatorio</button>` : ''}
+        </div>` : `
+        <div class="insight-btns" style="background:#FAFAFA;">
+          <span style="font-size:13px;color:var(--text-muted);flex:1;display:flex;align-items:center;">Omitido esta semana</span>
+          <button class="insight-btn-no" style="flex:none;padding:10px 16px;font-size:13px;" onclick="accionAceptar(${idx},0,${isReminder})">Cambié de opinión</button>
+        </div>`}
+      </div>`;
+    }
+
+    // Old format — just show with a regenerate nudge
     return `
-    <div class="insight-card" style="border-left:4px solid ${ds.color};">
-      <!-- Header -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <span style="font-size:18px;">${ds.icon}</span>
-        <span style="font-size:11px;font-weight:700;color:${ds.color};text-transform:uppercase;letter-spacing:0.5px;">${ins.dominio}</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--text-muted);background:#F2F2F7;border-radius:8px;padding:2px 8px;">${tipoLabel}</span>
+    <div class="insight-card">
+      <div class="insight-header">
+        <span class="insight-domain-icon">${ds.icon}</span>
+        <span class="insight-domain-name" style="color:${ds.color};">${ins.dominio}</span>
       </div>
-
-      ${hasNewFormat ? `
-      <!-- ACTION — front and centre -->
-      <div style="background:${ds.bg};border-radius:14px;padding:14px 16px;margin-bottom:14px;">
-        <p style="font-size:11px;font-weight:700;color:${ds.color};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
-          ${ins.accion.tipo === 'recordatorio' ? '⏰ Tu tarea de esta semana' : '✅ Tu tarea de esta semana'}
-        </p>
-        ${ins.accion.hora ? `<p style="font-size:22px;font-weight:700;color:${ds.color};letter-spacing:-0.5px;margin-bottom:4px;">${ins.accion.hora}</p>` : ''}
-        <p style="font-size:15px;font-weight:600;color:var(--text);line-height:1.4;">${ins.accion.texto}</p>
-      </div>
-
-      <!-- WHY -->
-      <p style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Por qué importa</p>
-      <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">${ins.porQue || ins.cuerpo || ''}</p>
-
-      <!-- BUTTONS -->
-      ${!estado ? `
-      <div style="display:flex;gap:8px;">
-        <button class="accion-btn-yes" style="flex:2;" onclick="accionAceptar(${idx},0,${isReminder})">¡Lo hago esta semana!</button>
-        <button class="accion-btn-no" style="flex:1;" onclick="accionRechazar(${idx},0)">Ahora no</button>
-      </div>` : estado === 'aceptada' ? `
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#F0FBF3;border-radius:12px;">
-        <span style="font-size:18px;">✅</span>
-        <span style="font-size:14px;font-weight:600;color:#248A3D;">Comprometido esta semana</span>
-        ${isReminder ? `<button class="accion-btn" style="margin-left:auto;" onclick="addReminder(${idx},0)">+ Recordatorio</button>` : ''}
-      </div>` : `
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#F2F2F7;border-radius:12px;">
-        <span style="font-size:14px;color:var(--text-muted);">Omitido por ahora</span>
-        <button style="margin-left:auto;font-size:12px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit;" onclick="accionAceptar(${idx},0,${isReminder})">Cambié de opinión</button>
-      </div>`}
-
-      ` : `
-      <!-- OLD FORMAT or no action -->
-      <p class="insight-title">${ins.titulo}</p>
+      <p class="insight-title" style="padding-top:14px;">${ins.titulo}</p>
       <p class="insight-body">${ins.cuerpo || ''}</p>
-      ${ins.acciones && ins.acciones.length ? ins.acciones.map((a, ai) => {
-        const est = (ins.accionEstados || {})[ai] || '';
-        return `<div class="accion-row ${est}" id="accion-${idx}-${ai}">
-          <div class="accion-top">
-            <span class="accion-ico">${a.tipo === 'recordatorio' ? '⏰' : '✅'}</span>
-            <span class="accion-texto">${a.hora ? `<strong>${a.hora}</strong> — ` : ''}${a.texto}</span>
-          </div>
-          ${!est ? `<div class="accion-btns">
-            <button class="accion-btn-yes" onclick="accionAceptar(${idx},${ai},${a.tipo==='recordatorio'&&a.hora})">¡Lo hago!</button>
-            <button class="accion-btn-no" onclick="accionRechazar(${idx},${ai})">Ahora no</button>
-          </div>` : ''}
-        </div>`;
-      }).join('') : `
-      <div style="margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Genera un nuevo insight para ver una acción concreta.</p>
-        <button class="accion-btn-yes" style="width:100%;" onclick="forceNewInsight()">Generar nuevo insight ✨</button>
-      </div>`}`}
+      <div style="padding:0 20px 18px;">
+        <button class="insight-btn-yes" style="width:100%;" onclick="forceNewInsight()">Actualizar insight ✨</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1797,9 +1862,12 @@ function renderHome() {
   banner.classList.toggle('hidden', hasDeep && STATE.weeklyAnswers.length > 3);
 
   const weekKey = getWeekKey();
-  const hasThisWeek = STATE.insights.some(i => i.week === weekKey);
+  const weekInsights = STATE.insights.filter(i => i.week === weekKey);
+  const hasThisWeek = weekInsights.length > 0;
+  // Auto-regenerate if current week insight uses old format (no accion field)
+  const needsRegen = hasThisWeek && weekInsights.every(i => !i.accion);
 
-  if (hasThisWeek) {
+  if (hasThisWeek && !needsRegen) {
     renderCurrentInsight();
     renderExtraButton();
     renderHabitsDashboard();
@@ -1807,7 +1875,8 @@ function renderHome() {
     renderWeeklyQuestion();
     checkProgressNote();
   } else {
-    document.getElementById('insight-zone').innerHTML = `<div class="loading-wrap"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loading-text">Generando tu insight de esta semana...</p></div>`;
+    document.getElementById('insight-zone').innerHTML = `<div class="loading-wrap"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loading-text">${needsRegen ? 'Actualizando tu insight...' : 'Generando tu insight de esta semana...'}</p></div>`;
+    STATE.lastInsightWeek = null;
     STATE.insightsThisWeek = 0;
     generateInsight();
   }
